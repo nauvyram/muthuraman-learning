@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Throttle demo</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            padding: 20px;
+        }
+
+        #box {
+            width: 80vw;
+            max-width: 800px;
+            height: 300px;
+            border: 2px dashed #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            user-select: none
+        }
+
+        #info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 12px
+        }
+
+        .stat {
+            font-size: 18px
+        }
+
+        label {
+            display: inline-flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        #coords {
+            font-size: 14px;
+            color: #444
+        }
+
+        button {
+            padding: 6px 10px
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Throttle visual demo</h1>
+
+    <div id="box">Move mouse here</div>
+
+    <div id="info">
+        <div class="stat">Raw events: <strong id="raw">0</strong></div>
+        <div class="stat">Throttled events: <strong id="thr">0</strong></div>
+        <div id="coords">x: <span id="x">-</span>, y: <span id="y">-</span></div>
+    </div>
+
+    <div style="display:flex;gap:12px;align-items:center">
+        <label>Wait (ms): <input id="wait" type="number" value="200" min="0" step="50" style="width:90px"></label>
+        <button id="cancel">Cancel pending</button>
+        <button id="reset">Reset counts</button>
+    </div>
+
+    <!-- Include the non-module throttle implementation from this folder -->
+    <script src="throttle.js"></script>
+    <script>
+        // Elements
+        const box = document.getElementById('box');
+        const rawEl = document.getElementById('raw');
+        const thrEl = document.getElementById('thr');
+        const xEl = document.getElementById('x');
+        const yEl = document.getElementById('y');
+        const waitInput = document.getElementById('wait');
+        const cancelBtn = document.getElementById('cancel');
+        const resetBtn = document.getElementById('reset');
+
+        // Counters for demonstration
+        let rawCount = 0;
+        let thrCount = 0;
+
+        // Handler called for every mousemove (raw)
+        function handleRaw(e) {
+            rawCount += 1;
+            rawEl.textContent = rawCount;
+        }
+
+        // Handler that should be throttled
+        function handleThrottled(e) {
+            thrCount += 1;
+            thrEl.textContent = thrCount;
+            xEl.textContent = Math.round(e.clientX);
+            yEl.textContent = Math.round(e.clientY);
+            // briefly flash the box to show the throttled event visually
+            box.style.background = '#e6ffe6';
+            setTimeout(() => box.style.background = '', 80);
+        }
+
+        // Create initial throttled wrapper using current wait value
+        let throttledHandler = throttle(handleThrottled, Number(waitInput.value));
+
+        // Attach listener: update raw count and call throttled handler
+        box.addEventListener('mousemove', (e) => {
+            handleRaw(e);
+            throttledHandler(e);
+        });
+
+        // When wait changes, recreate the throttled handler (cancel previous)
+        waitInput.addEventListener('change', () => {
+            if (throttledHandler && typeof throttledHandler.cancel === 'function') {
+                throttledHandler.cancel();
+            }
+            throttledHandler = throttle(handleThrottled, Number(waitInput.value));
+        });
+
+        // Cancel any pending trailing call
+        cancelBtn.addEventListener('click', () => {
+            if (throttledHandler && typeof throttledHandler.cancel === 'function') {
+                throttledHandler.cancel();
+            }
+        });
+
+        // Reset counters
+        resetBtn.addEventListener('click', () => {
+            rawCount = 0;
+            thrCount = 0;
+            rawEl.textContent = '0';
+            thrEl.textContent = '0';
+            xEl.textContent = '-';
+            yEl.textContent = '-';
+        });
+    </script>
+</body>
+
+</html>
