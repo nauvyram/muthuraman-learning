@@ -1,0 +1,26 @@
+.star-rating {
+  display: flex;
+  gap: 5px;
+  cursor: pointer;
+}
+.star-container {
+  position: relative;
+}
+.star {
+  font-size: 100px;
+  color: #e4e5e9; /* Default grey for empty stars */
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+.star.full {
+  color: #f5c518; /* Gold color for full stars */
+}
+.star.half {
+  background: linear-gradient(90deg, #f5c518 50%, #e4e5e9 50%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.star.empty {
+  color: #e4e5e9;
+}
